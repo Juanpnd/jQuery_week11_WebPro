@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .shapeContainerWrapper {
+            padding: 20px;
+        }
+        .shapeContainer {
+            width: 600px;
+            height: 400px;
+            border: 1px solid #000;
+            position: relative;
+            overflow: hidden;
+            padding: 10px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .shape {
+            position: absolute;
+            display: inline-block;
+        }
+        .circle {
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="shapeContainerWrapper">
+        <div class="controls">
+            <button id="addShape">Add Shape</button>
+            <button id="removeShape">Remove Shape</button>
+            <div class="shapeControls">
+                <label for="shapeType">Shape:</label>
+                <select id="shapeType">
+                    <option value="square">Square</option>
+                    <option value="circle">Circle</option>
+                </select>
+                <label for="shapeColor">Color:</label>
+                <input type="color" id="shapeColor" value="#ff0000">
+                <label for="shapeSize">Size (px):</label>
+                <input type="number" id="shapeSize" value="50" min="10" max="100">
+            </div>
+        </div>
+        <div class="shapeContainer" id="shapeContainer"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            let isAnimating = false;
+            const container = $('#shapeContainer');
+            const containerWidth = container.width();
+            const containerHeight = container.height();
+            let shapes = [];
+
+            function getShapePosition(size) {
+                let x = 10, y = 10;
+                if (shapes.length > 0) {
+                    const lastShape = shapes[shapes.length - 1];
+                    x = lastShape.x + lastShape.size + 10;
+                    y = lastShape.y;
+                    if (x + size > containerWidth) {
+                        x = 10;
+                        y += size + 10;
+                    }
+                }
+                return { x, y };
+            }
+
+            $('#addShape').click(function() {
+                if (isAnimating) return;
+                isAnimating = true;
+                const shapeType = $('#shapeType').val();
+                const shapeColor = $('#shapeColor').val();
+                const shapeSize = parseInt($('#shapeSize').val());
+
+                const { x, y } = getShapePosition(shapeSize);
+                if (y + shapeSize > containerHeight) {
+                    alert('No more space to add shapes');
+                    isAnimating = false;
+                    return;
+                }
+
+                const shape = $('<div class="shape"></div>')
+                    .addClass(shapeType)
+                    .css({
+                        width: shapeSize + 'px',
+                        height: shapeSize + 'px',
+                        backgroundColor: shapeColor,
+                        top: y + 'px',
+                        left: -shapeSize + 'px'
+                    });
+
+                container.append(shape);
+                shape.animate({ left: x + 'px' }, 500, function() {
+                    shapes.push({ el: shape, x, y, size: shapeSize });
+                    isAnimating = false;
+                });
+            });
+
+            $('#removeShape').click(function() {
+                if (isAnimating || shapes.length === 0) return;
+                isAnimating = true;
+
+                const lastShape = shapes.pop();
+                lastShape.el.fadeOut(500, function() {
+                    $(this).remove();
+                    isAnimating = false;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
